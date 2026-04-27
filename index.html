@@ -495,6 +495,98 @@
     .footer-text { font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);letter-spacing:1px; }
 
     /* ═══════════════════════════════════════
+       SCANNING OVERLAY
+    ═══════════════════════════════════════ */
+    .scan-overlay {
+      position:fixed; inset:0; z-index:600;
+      background:rgba(2,11,24,.95); backdrop-filter:blur(16px);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity .35s ease;
+    }
+    .scan-overlay.show { opacity:1; pointer-events:auto; }
+
+    /* Scanning ring animation */
+    .scan-ring-outer {
+      width:190px; height:190px; border-radius:50%;
+      border:2px solid rgba(0,245,212,.2);
+      display:flex; align-items:center; justify-content:center;
+      position:relative; margin-bottom:32px;
+      animation:scanRingSpin 2.5s linear infinite;
+    }
+    @keyframes scanRingSpin { to { transform:rotate(360deg); } }
+
+    .scan-ring-outer::before {
+      content:''; position:absolute; inset:-8px;
+      border-radius:50%;
+      border:1.5px dashed rgba(0,200,255,.2);
+      animation:scanRingSpin 4s linear infinite reverse;
+    }
+    .scan-ring-outer::after {
+      content:''; position:absolute;
+      width:14px; height:14px; border-radius:50%;
+      top:-7px; left:50%; transform:translateX(-50%);
+    }
+    .scan-ring-outer.qr-ring::after  { background:var(--neon);  box-shadow:0 0 12px var(--neon); }
+    .scan-ring-outer.bar-ring::after { background:var(--green); box-shadow:0 0 12px var(--green); }
+    .scan-ring-outer.nfc-ring::after { background:var(--neon3); box-shadow:0 0 12px var(--neon3); }
+
+    .scan-ring-inner {
+      width:130px; height:130px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:3rem;
+      position:relative;
+    }
+    .scan-ring-inner.qr-inner  { background:radial-gradient(circle,rgba(0,245,212,.15),rgba(0,245,212,.02)); border:1px solid rgba(0,245,212,.3); box-shadow:0 0 30px rgba(0,245,212,.2),inset 0 0 20px rgba(0,245,212,.04); }
+    .scan-ring-inner.bar-inner { background:radial-gradient(circle,rgba(0,230,118,.15),rgba(0,230,118,.02)); border:1px solid rgba(0,230,118,.3); box-shadow:0 0 30px rgba(0,230,118,.2),inset 0 0 20px rgba(0,230,118,.04); }
+    .scan-ring-inner.nfc-inner { background:radial-gradient(circle,rgba(123,47,255,.15),rgba(123,47,255,.02)); border:1px solid rgba(123,47,255,.3); box-shadow:0 0 30px rgba(123,47,255,.2),inset 0 0 20px rgba(123,47,255,.04); }
+
+    /* Sweeping beam inside the ring */
+    .scan-ring-inner::after {
+      content:''; position:absolute; inset:0; border-radius:50%;
+      animation:scanBeamRotate 1.5s linear infinite;
+    }
+    .qr-inner::after  { background:conic-gradient(from 0deg,transparent 0%,rgba(0,245,212,.25) 15%,transparent 30%); }
+    .bar-inner::after { background:conic-gradient(from 0deg,transparent 0%,rgba(0,230,118,.25) 15%,transparent 30%); }
+    .nfc-inner::after { background:conic-gradient(from 0deg,transparent 0%,rgba(123,47,255,.25) 15%,transparent 30%); }
+    @keyframes scanBeamRotate { to { transform:rotate(360deg); } }
+
+    .scan-type-label {
+      font-family:'Orbitron',monospace; font-size:1.3rem; font-weight:700;
+      letter-spacing:3px; margin-bottom:10px; text-transform:uppercase;
+    }
+    .scan-type-label.qr-label  { color:var(--neon);  text-shadow:0 0 20px rgba(0,245,212,.7); }
+    .scan-type-label.bar-label { color:var(--green); text-shadow:0 0 20px rgba(0,230,118,.7); }
+    .scan-type-label.nfc-label { color:#c084fc;      text-shadow:0 0 20px rgba(192,132,252,.7); }
+
+    .scan-sub-label {
+      font-family:'Share Tech Mono',monospace; font-size:.72rem;
+      color:var(--dim); letter-spacing:2px; margin-bottom:28px;
+    }
+
+    /* Progress bar */
+    .scan-progress {
+      width:220px; height:4px; background:rgba(255,255,255,.08);
+      border-radius:99px; overflow:hidden; position:relative;
+    }
+    .scan-progress-bar {
+      height:100%; width:0; border-radius:99px;
+      transition:width 1.6s linear;
+    }
+    .scan-progress-bar.qr-bar  { background:linear-gradient(90deg,var(--neon),var(--neon2));  box-shadow:0 0 10px var(--neon); }
+    .scan-progress-bar.bar-bar { background:linear-gradient(90deg,var(--green),#34d399);     box-shadow:0 0 10px var(--green); }
+    .scan-progress-bar.nfc-bar { background:linear-gradient(90deg,var(--neon3),#c084fc);     box-shadow:0 0 10px var(--neon3); }
+
+    .scan-progress-bar.filling { width:100%; }
+
+    .scan-status-text {
+      font-family:'Share Tech Mono',monospace; font-size:.65rem;
+      color:var(--dim); letter-spacing:1.5px; margin-top:14px;
+      animation:statusBlink .8s infinite;
+    }
+    @keyframes statusBlink { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+    /* ═══════════════════════════════════════
        RESPONSIVE
     ═══════════════════════════════════════ */
     @media(max-width:900px) {
@@ -505,19 +597,51 @@
       .hero-desc   { margin:0 auto 36px; }
       .about-grid  { grid-template-columns:1fr; }
       .sc-fields   { grid-template-columns:1fr; }
+      .student-card { padding:28px 22px 22px; }
     }
     @media(max-width:768px) {
       .nav-links    { display:none; }
       .hamburger    { display:flex; }
-      .page-inner   { padding:48px 5% 60px; }
+      .page-inner   { padding:40px 4% 50px; }
       .sc-header    { flex-direction:column;align-items:center;text-align:center; }
+      .demo-grid    { grid-template-columns:1fr; gap:18px; }
+      .features-grid { grid-template-columns:1fr; gap:16px; }
+      .student-card  { width:min(420px,95vw); padding:24px 18px 20px; border-radius:14px; }
+      .sc-name       { font-size:1rem; }
+      .sc-field span { font-size:.74rem; }
+      .scan-btn      { padding:16px; font-size:.78rem; -webkit-tap-highlight-color:transparent; }
+      .btn-cyber,.btn-outline-cyber { padding:14px 24px; font-size:.78rem; }
+      .section-header { margin-bottom:36px; }
+      .hero-title { font-size:clamp(1.6rem,6vw,2.6rem); }
+      .scan-type-label { font-size:1.1rem; }
+      .scan-ring-outer { width:160px; height:160px; }
+      .scan-ring-inner { width:110px; height:110px; font-size:2.4rem; }
     }
     @media(max-width:480px) {
-      .hero-stats   { flex-direction:column;align-items:center; }
-      .id-card      { width:256px; }
-      .spin-ring    { width:270px;height:270px; }
-      .spin-ring2   { width:228px;height:228px; }
-      .demo-grid    { grid-template-columns:1fr; }
+      .hero-stats     { flex-direction:column;align-items:center; }
+      .id-card        { width:240px; }
+      .spin-ring      { width:260px;height:260px; }
+      .spin-ring2     { width:218px;height:218px; }
+      .demo-card      { padding:24px 18px; }
+      .hub-circle     { width:70px;height:70px;font-size:1.6rem; }
+      .hub-circle::before { width:90px;height:90px; }
+      .hub-circle::after  { width:112px;height:112px; }
+      .student-card   { width:95vw; padding:20px 14px 16px; }
+      .sc-photo-wrap  { width:80px;height:96px; }
+      .sc-name        { font-size:.92rem; }
+      .sc-field label { font-size:.52rem; }
+      .sc-field span  { font-size:.7rem; }
+      .sc-footer      { flex-direction:column;gap:10px;align-items:flex-start; }
+      .scan-ring-outer { width:140px;height:140px; }
+      .scan-ring-inner { width:96px;height:96px;font-size:2rem; }
+      .scan-type-label { font-size:.95rem; }
+      .scan-progress   { width:180px; }
+      nav { padding:0 4%; height:56px; }
+      .brand-icon { width:34px;height:34px; }
+      .nav-brand { font-size:.82rem;gap:7px; }
+      .nav-mobile { top:56px; }
+      .page-footer { padding:24px 4%; }
+      .footer-brand { font-size:.8rem; }
     }
   </style>
 </head>
@@ -756,6 +880,21 @@
   </div>
 </div>
 
+<!-- ═══════════ SCANNING OVERLAY ═══════════ -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-ring-outer" id="scanRingOuter">
+    <div class="scan-ring-inner" id="scanRingInner">
+      <span id="scanEmoji">📱</span>
+    </div>
+  </div>
+  <div class="scan-type-label" id="scanTypeLabel">QR CODE SCAN</div>
+  <div class="scan-sub-label" id="scanSubLabel">AUTHENTICATING IDENTITY...</div>
+  <div class="scan-progress">
+    <div class="scan-progress-bar" id="scanProgressBar"></div>
+  </div>
+  <div class="scan-status-text" id="scanStatusText">▶ READING ID DATA...</div>
+</div>
+
 <!-- ═══════════ JAVASCRIPT ═══════════ -->
 <script>
   /* ══ BG Canvas – Circuit + Matrix ══ */
@@ -907,28 +1046,93 @@
     document.getElementById('resultOverlay').classList.remove('show');
   }
 
-  /* ══ Scan helpers ══ */
-  function animateScan(circleId,btnId,label,color,cb){
-    const btn=document.getElementById(btnId);
-    const circle=document.getElementById(circleId);
-    btn.textContent='◌  SCANNING...'; btn.disabled=true;
-    circle.style.transform='scale(1.2)';
-    circle.style.filter=`drop-shadow(0 0 18px ${color})`;
+  /* ══ Scanning Overlay ══ */
+  const scanConfigs = {
+    qr: {
+      emoji:'📱', label:'QR CODE SCAN', sub:'READING QR MATRIX...', color:'qr',
+      steps:['▶ READING QR CODE...','▶ DECODING HASH...','▶ VERIFYING IDENTITY...','✔ MATCH FOUND']
+    },
+    barcode: {
+      emoji:'|||', label:'BARCODE SCAN', sub:'READING BARCODE STRIP...', color:'bar',
+      steps:['▶ SCANNING BARCODE...','▶ PARSING DATA...','▶ CROSS-REFERENCING...','✔ MATCH FOUND']
+    },
+    nfc: {
+      emoji:'📡', label:'NFC TAP SCAN', sub:'READING NFC CHIP...', color:'nfc',
+      steps:['▶ NFC HANDSHAKE...','▶ READING CHIP DATA...','▶ AUTHENTICATING...','✔ MATCH FOUND']
+    }
+  };
+
+  function showScanOverlay(type, cb){
+    const cfg = scanConfigs[type];
+    const overlay = document.getElementById('scanOverlay');
+    const ringOuter = document.getElementById('scanRingOuter');
+    const ringInner = document.getElementById('scanRingInner');
+    const emoji = document.getElementById('scanEmoji');
+    const typeLabel = document.getElementById('scanTypeLabel');
+    const subLabel = document.getElementById('scanSubLabel');
+    const bar = document.getElementById('scanProgressBar');
+    const statusText = document.getElementById('scanStatusText');
+
+    // Set classes for color
+    ringOuter.className = 'scan-ring-outer '+ cfg.color +'-ring';
+    ringInner.className = 'scan-ring-inner '+ cfg.color +'-inner';
+    typeLabel.className = 'scan-type-label '+ cfg.color +'-label';
+    bar.className       = 'scan-progress-bar '+ cfg.color +'-bar';
+    emoji.textContent = cfg.emoji;
+    typeLabel.textContent = cfg.label;
+    subLabel.textContent = cfg.sub;
+    statusText.textContent = cfg.steps[0];
+    bar.classList.remove('filling');
+    bar.style.width = '0';
+
+    overlay.classList.add('show');
+
+    // Start progress bar
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{ bar.classList.add('filling'); });
+    });
+
+    // Step through status messages
+    const stepDelay = 500;
+    cfg.steps.forEach((msg, i) => {
+      setTimeout(()=>{ statusText.textContent = msg; }, stepDelay * (i + 1));
+    });
+
+    // After full animation, close overlay and show student card
     setTimeout(()=>{
-      btn.innerHTML=label; btn.disabled=false;
-      circle.style.transform=''; circle.style.filter='';
-      cb();
-    },1100);
+      overlay.classList.remove('show');
+      setTimeout(cb, 250);
+    }, 2200);
+  }
+
+  /* ══ Scan button helpers ══ */
+  function animateBtn(circleId, btnId, label, color) {
+    const btn = document.getElementById(btnId);
+    const circle = document.getElementById(circleId);
+    btn.textContent = '◌  SCANNING...';
+    btn.disabled = true;
+    circle.style.transform = 'scale(1.15)';
+    circle.style.filter = `drop-shadow(0 0 18px ${color})`;
+    // Reset after overlay finishes
+    setTimeout(()=>{
+      btn.innerHTML = label;
+      btn.disabled = false;
+      circle.style.transform = '';
+      circle.style.filter = '';
+    }, 2500);
   }
 
   function scanQR(){
-    animateScan('qrCircle','qrBtn','▶ INITIATE QR SCAN','rgba(0,245,212,.8)',()=>{ showStudentModal('qr'); });
+    animateBtn('qrCircle','qrBtn','▶ INITIATE QR SCAN','rgba(0,245,212,.8)');
+    showScanOverlay('qr', ()=>{ showStudentModal('qr'); });
   }
   function scanBarcode(){
-    animateScan('barCircle','barBtn','▶ INITIATE BARCODE SCAN','rgba(0,230,118,.8)',()=>{ showStudentModal('barcode'); });
+    animateBtn('barCircle','barBtn','▶ INITIATE BARCODE SCAN','rgba(0,230,118,.8)');
+    showScanOverlay('barcode', ()=>{ showStudentModal('barcode'); });
   }
   function tapNFC(){
-    animateScan('nfcCircle','nfcBtn','▶ TAP NFC CARD','rgba(123,47,255,.8)',()=>{ showStudentModal('nfc'); });
+    animateBtn('nfcCircle','nfcBtn','▶ TAP NFC CARD','rgba(123,47,255,.8)');
+    showScanOverlay('nfc', ()=>{ showStudentModal('nfc'); });
   }
 </script>
 </body>
