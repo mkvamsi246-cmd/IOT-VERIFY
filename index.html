@@ -460,6 +460,251 @@
     .hud-br { bottom:0;right:0;border-width:0 2px 2px 0; }
 
     /* ═══════════════════════════════════════
+       ATTENDANCE MODAL (Barcode)
+    ═══════════════════════════════════════ */
+    .att-overlay {
+      position:fixed; inset:0; z-index:500;
+      background:rgba(2,11,24,.88); backdrop-filter:blur(10px);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity .4s ease;
+    }
+    .att-overlay.show { opacity:1; pointer-events:auto; }
+
+    .att-card {
+      background:linear-gradient(145deg,rgba(0,38,20,.95),rgba(0,18,10,.98));
+      border:1px solid rgba(0,230,118,.35);
+      border-radius:18px; padding:32px 32px 26px;
+      width:min(540px,94vw); position:relative;
+      box-shadow:0 0 60px rgba(0,230,118,.12),0 40px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(0,230,118,.15);
+      transform:scale(.88) translateY(20px);
+      transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+      max-height:90vh; overflow-y:auto;
+    }
+    .att-overlay.show .att-card { transform:scale(1) translateY(0); }
+    .att-card::before { content:'';position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 14px var(--green); }
+    .att-card::after { content:'';position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,230,118,.55),transparent);animation:cardScan2 2.5s ease-in-out infinite;top:0; }
+    .att-card .hud-tl,.att-card .hud-tr,.att-card .hud-bl,.att-card .hud-br { border-color:var(--green); }
+
+    .att-header { display:flex;gap:18px;align-items:center;margin-bottom:20px; }
+    .att-photo { flex-shrink:0;width:72px;height:84px;border:2px solid rgba(0,230,118,.4);border-radius:8px;overflow:hidden;box-shadow:0 0 16px rgba(0,230,118,.18); }
+    .att-photo img { width:100%;height:100%;object-fit:cover; }
+    .att-meta { flex:1; }
+    .att-badge {
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--green);
+      border:1px solid rgba(0,230,118,.3);background:rgba(0,230,118,.07);
+      padding:3px 10px;border-radius:2px;letter-spacing:1px;margin-bottom:8px;
+      text-shadow:0 0 7px rgba(0,230,118,.5);
+    }
+    .att-badge .sd { width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:blink 1.2s infinite; }
+    .att-name { font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:3px; }
+    .att-sub { font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.5px; }
+
+    .att-divider { height:1px;background:rgba(0,230,118,.12);margin:0 0 18px; }
+
+    /* ── Basic details grid inside Barcode / NFC modals ── */
+    .basic-details-grid {
+      display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin-bottom:18px;
+    }
+    .basic-detail-item label {
+      display:block;font-family:'Share Tech Mono',monospace;
+      font-size:.55rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;
+    }
+    .basic-detail-item span {
+      display:block;font-family:'Orbitron',monospace;
+      font-size:.75rem;font-weight:600;color:#fff;letter-spacing:.3px;
+    }
+    .att-detail-item label { color:rgba(0,230,118,.7); }
+    .nfc-detail-item label { color:rgba(192,132,252,.7); }
+
+    .att-info-row { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px; }
+    .att-info-box {
+      background:rgba(0,230,118,.04);border:1px solid rgba(0,230,118,.15);
+      border-radius:8px;padding:12px 10px;text-align:center;
+      position:relative;overflow:hidden;
+    }
+    .att-info-box::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,230,118,.4),transparent); }
+    .att-info-box .att-val {
+      font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:700;
+      margin-bottom:3px;
+    }
+    .att-info-box .att-lbl {
+      font-family:'Share Tech Mono',monospace;font-size:.52rem;
+      color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;
+    }
+    .att-val.green { color:var(--green);text-shadow:0 0 10px rgba(0,230,118,.5); }
+    .att-val.red   { color:var(--red);text-shadow:0 0 10px rgba(255,59,59,.4); }
+    .att-val.cyan  { color:var(--neon);text-shadow:0 0 10px rgba(0,245,212,.5); }
+
+    .att-section-title {
+      font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--green);
+      letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;
+      padding-left:10px;border-left:2px solid var(--green);opacity:.8;
+    }
+
+    .att-table {
+      width:100%;border-collapse:collapse;margin-bottom:18px;
+    }
+    .att-table th {
+      font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--green);
+      letter-spacing:1.5px;text-transform:uppercase;text-align:left;
+      padding:8px 10px;background:rgba(0,230,118,.06);
+      border-bottom:1px solid rgba(0,230,118,.15);
+    }
+    .att-table td {
+      font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text);
+      padding:8px 10px;border-bottom:1px solid rgba(0,230,118,.06);
+    }
+    .att-table tr:hover td { background:rgba(0,230,118,.04); }
+    .att-table .present { color:var(--green); }
+    .att-table .absent  { color:var(--red); }
+
+    .att-bar-chart { display:flex;align-items:flex-end;gap:6px;height:60px;margin-bottom:4px; }
+    .att-bar-col {
+      flex:1;border-radius:3px 3px 0 0;position:relative;
+      transition:height .5s ease;
+      min-width:0;
+    }
+    .att-bar-col.high { background:linear-gradient(to top,rgba(0,230,118,.3),rgba(0,230,118,.7)); }
+    .att-bar-col.mid  { background:linear-gradient(to top,rgba(0,200,255,.3),rgba(0,200,255,.7)); }
+    .att-bar-col.low  { background:linear-gradient(to top,rgba(255,59,59,.3),rgba(255,59,59,.7)); }
+    .att-bar-labels { display:flex;gap:6px; }
+    .att-bar-labels span {
+      flex:1;text-align:center;font-family:'Share Tech Mono',monospace;
+      font-size:.45rem;color:var(--dim);letter-spacing:.5px;
+    }
+
+    .att-footer {
+      display:flex;align-items:center;justify-content:space-between;
+      padding-top:14px;border-top:1px solid rgba(0,230,118,.1);
+    }
+    .att-footer-tick {
+      display:flex;align-items:center;gap:8px;
+      font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--green);
+      letter-spacing:1px;
+    }
+    .att-footer-time {
+      font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);
+    }
+
+    /* ═══════════════════════════════════════
+       NFC SEMESTER MODAL
+    ═══════════════════════════════════════ */
+    .nfc-overlay {
+      position:fixed; inset:0; z-index:500;
+      background:rgba(2,11,24,.88); backdrop-filter:blur(10px);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity .4s ease;
+    }
+    .nfc-overlay.show { opacity:1; pointer-events:auto; }
+
+    .nfc-card {
+      background:linear-gradient(145deg,rgba(20,0,50,.95),rgba(10,0,30,.98));
+      border:1px solid rgba(123,47,255,.35);
+      border-radius:18px; padding:32px 32px 26px;
+      width:min(580px,94vw); position:relative;
+      box-shadow:0 0 60px rgba(123,47,255,.12),0 40px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(123,47,255,.15);
+      transform:scale(.88) translateY(20px);
+      transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+      max-height:90vh; overflow-y:auto;
+    }
+    .nfc-overlay.show .nfc-card { transform:scale(1) translateY(0); }
+    .nfc-card::before { content:'';position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,#c084fc,transparent);box-shadow:0 0 14px #c084fc; }
+    .nfc-card::after { content:'';position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(192,132,252,.55),transparent);animation:cardScan2 2.5s ease-in-out infinite;top:0; }
+    .nfc-card .hud-tl,.nfc-card .hud-tr,.nfc-card .hud-bl,.nfc-card .hud-br { border-color:var(--neon3); }
+
+    .nfc-header { display:flex;gap:18px;align-items:center;margin-bottom:20px; }
+    .nfc-photo { flex-shrink:0;width:72px;height:84px;border:2px solid rgba(123,47,255,.4);border-radius:8px;overflow:hidden;box-shadow:0 0 16px rgba(123,47,255,.18); }
+    .nfc-photo img { width:100%;height:100%;object-fit:cover; }
+    .nfc-meta { flex:1; }
+    .nfc-badge {
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:'Share Tech Mono',monospace;font-size:.58rem;color:#c084fc;
+      border:1px solid rgba(123,47,255,.3);background:rgba(123,47,255,.07);
+      padding:3px 10px;border-radius:2px;letter-spacing:1px;margin-bottom:8px;
+      text-shadow:0 0 7px rgba(192,132,252,.5);
+    }
+    .nfc-badge .sd { width:5px;height:5px;border-radius:50%;background:#c084fc;box-shadow:0 0 5px #c084fc;animation:blink 1.2s infinite; }
+    .nfc-name { font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:3px; }
+    .nfc-sub { font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.5px; }
+
+    .nfc-divider { height:1px;background:rgba(123,47,255,.12);margin:0 0 18px; }
+
+    .nfc-stats-row { display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:18px; }
+    .nfc-stat-box {
+      background:rgba(123,47,255,.04);border:1px solid rgba(123,47,255,.15);
+      border-radius:8px;padding:10px 6px;text-align:center;
+      position:relative;overflow:hidden;
+    }
+    .nfc-stat-box::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(192,132,252,.4),transparent); }
+    .nfc-stat-box .nfc-val {
+      font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;
+      color:#c084fc;text-shadow:0 0 10px rgba(192,132,252,.5);margin-bottom:2px;
+    }
+    .nfc-stat-box .nfc-lbl {
+      font-family:'Share Tech Mono',monospace;font-size:.48rem;
+      color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;
+    }
+
+    .nfc-section-title {
+      font-family:'Share Tech Mono',monospace;font-size:.62rem;color:#c084fc;
+      letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;
+      padding-left:10px;border-left:2px solid #c084fc;opacity:.8;
+    }
+
+    .sem-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px; }
+    .sem-block {
+      background:rgba(123,47,255,.04);border:1px solid rgba(123,47,255,.12);
+      border-radius:8px;padding:12px;position:relative;overflow:hidden;
+      transition:background var(--tr),border-color var(--tr);
+    }
+    .sem-block:hover { background:rgba(123,47,255,.08);border-color:rgba(123,47,255,.3); }
+    .sem-block::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(192,132,252,.3),transparent);opacity:0;transition:opacity var(--tr); }
+    .sem-block:hover::before { opacity:1; }
+    .sem-block-hdr { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
+    .sem-label {
+      font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;
+      color:#c084fc;letter-spacing:1px;
+    }
+    .sem-gpa {
+      font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;
+      padding:2px 8px;border-radius:3px;
+    }
+    .sem-gpa.high { color:var(--green);background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2); }
+    .sem-gpa.mid  { color:var(--neon2);background:rgba(0,200,255,.08);border:1px solid rgba(0,200,255,.2); }
+    .sem-gpa.low  { color:#ffa600;background:rgba(255,166,0,.08);border:1px solid rgba(255,166,0,.2); }
+
+    .sem-details { display:grid;grid-template-columns:1fr 1fr;gap:4px; }
+    .sem-detail-item label {
+      display:block;font-family:'Share Tech Mono',monospace;
+      font-size:.46rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;
+    }
+    .sem-detail-item span {
+      font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--text);
+    }
+
+    .nfc-footer {
+      display:flex;align-items:center;justify-content:space-between;
+      padding-top:14px;border-top:1px solid rgba(123,47,255,.1);
+    }
+    .nfc-footer-tick {
+      display:flex;align-items:center;gap:8px;
+      font-family:'Share Tech Mono',monospace;font-size:.65rem;color:#c084fc;
+      letter-spacing:1px;
+    }
+    .nfc-footer-time {
+      font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);
+    }
+
+    /* scrollbar for modals */
+    .att-card::-webkit-scrollbar,.nfc-card::-webkit-scrollbar { width:4px; }
+    .att-card::-webkit-scrollbar-track,.nfc-card::-webkit-scrollbar-track { background:transparent; }
+    .att-card::-webkit-scrollbar-thumb { background:rgba(0,230,118,.3);border-radius:99px; }
+    .nfc-card::-webkit-scrollbar-thumb { background:rgba(123,47,255,.3);border-radius:99px; }
+
+    /* ═══════════════════════════════════════
        PAGE 4 – ABOUT
     ═══════════════════════════════════════ */
     #page-about { background:linear-gradient(180deg,rgba(2,11,24,1),rgba(3,14,31,.98)); }
@@ -598,15 +843,22 @@
       .about-grid  { grid-template-columns:1fr; }
       .sc-fields   { grid-template-columns:1fr; }
       .student-card { padding:28px 22px 22px; }
+      .att-info-row { grid-template-columns:1fr 1fr 1fr; }
+      .nfc-stats-row { grid-template-columns:1fr 1fr; }
+      .sem-grid { grid-template-columns:1fr; }
     }
     @media(max-width:768px) {
       .nav-links    { display:none; }
       .hamburger    { display:flex; }
       .page-inner   { padding:40px 4% 50px; }
       .sc-header    { flex-direction:column;align-items:center;text-align:center; }
+      .att-header   { flex-direction:column;align-items:center;text-align:center; }
+      .nfc-header   { flex-direction:column;align-items:center;text-align:center; }
       .demo-grid    { grid-template-columns:1fr; gap:18px; }
       .features-grid { grid-template-columns:1fr; gap:16px; }
       .student-card  { width:min(420px,95vw); padding:24px 18px 20px; border-radius:14px; }
+      .att-card      { width:min(420px,95vw); padding:24px 18px 20px; border-radius:14px; }
+      .nfc-card      { width:min(460px,95vw); padding:24px 18px 20px; border-radius:14px; }
       .sc-name       { font-size:1rem; }
       .sc-field span { font-size:.74rem; }
       .scan-btn      { padding:16px; font-size:.78rem; -webkit-tap-highlight-color:transparent; }
@@ -616,6 +868,9 @@
       .scan-type-label { font-size:1.1rem; }
       .scan-ring-outer { width:160px; height:160px; }
       .scan-ring-inner { width:110px; height:110px; font-size:2.4rem; }
+      .att-info-row { grid-template-columns:1fr 1fr 1fr; }
+      .nfc-stats-row { grid-template-columns:1fr 1fr; }
+      .sem-grid { grid-template-columns:1fr; }
     }
     @media(max-width:480px) {
       .hero-stats     { flex-direction:column;align-items:center; }
@@ -627,11 +882,17 @@
       .hub-circle::before { width:90px;height:90px; }
       .hub-circle::after  { width:112px;height:112px; }
       .student-card   { width:95vw; padding:20px 14px 16px; }
+      .att-card       { width:95vw; padding:16px 12px 14px; }
+      .nfc-card       { width:95vw; padding:16px 12px 14px; }
       .sc-photo-wrap  { width:80px;height:96px; }
       .sc-name        { font-size:.92rem; }
       .sc-field label { font-size:.52rem; }
       .sc-field span  { font-size:.7rem; }
       .sc-footer      { flex-direction:column;gap:10px;align-items:flex-start; }
+      .att-footer     { flex-direction:column;gap:8px;align-items:flex-start; }
+      .nfc-footer     { flex-direction:column;gap:8px;align-items:flex-start; }
+      .att-info-row   { grid-template-columns:1fr; }
+      .nfc-stats-row  { grid-template-columns:1fr 1fr; }
       .scan-ring-outer { width:140px;height:140px; }
       .scan-ring-inner { width:96px;height:96px;font-size:2rem; }
       .scan-type-label { font-size:.95rem; }
@@ -880,6 +1141,112 @@
   </div>
 </div>
 
+<!-- ═══════════ ATTENDANCE MODAL (Barcode) ═══════════ -->
+<div class="att-overlay" id="attOverlay" onclick="if(event.target===this)closeAttModal()">
+  <div class="att-card" id="attCard">
+    <div class="hud-tl"></div><div class="hud-tr"></div>
+    <div class="hud-bl"></div><div class="hud-br"></div>
+    <button class="sc-close" onclick="closeAttModal()" style="border-color:rgba(0,230,118,.3);color:var(--green);background:rgba(0,230,118,.08);">✕ CLOSE</button>
+
+    <div class="att-header">
+      <div class="att-photo"><img id="attPhoto" src="student2.png" alt="Student"/></div>
+      <div class="att-meta">
+        <div class="att-badge"><span class="sd"></span>BARCODE VERIFIED</div>
+        <div class="att-name" id="attName">PRIYA SHARMA</div>
+        <div class="att-sub" id="attSub">STU-2024-1045 · ELECTRONICS & COMM ENGG · 2ND YEAR</div>
+      </div>
+    </div>
+
+    <div class="att-divider"></div>
+
+    <!-- Basic Details -->
+    <div class="att-section-title">STUDENT DETAILS</div>
+    <div class="basic-details-grid" id="attBasicDetails">
+      <div class="basic-detail-item att-detail-item"><label>STUDENT ID</label><span id="attID">STU-2024-1045</span></div>
+      <div class="basic-detail-item att-detail-item"><label>BRANCH</label><span id="attBranch">ELECTRONICS &amp; COMM ENGG</span></div>
+      <div class="basic-detail-item att-detail-item"><label>PHONE NUMBER</label><span id="attPhone">+91 87654 32109</span></div>
+      <div class="basic-detail-item att-detail-item"><label>YEAR</label><span id="attYear">2ND YEAR</span></div>
+      <div class="basic-detail-item att-detail-item"><label>SECTION</label><span id="attSection">SEC-B</span></div>
+      <div class="basic-detail-item att-detail-item"><label>SCAN TYPE</label><span style="color:var(--green)">BARCODE</span></div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="att-info-row" id="attInfoRow">
+      <div class="att-info-box"><div class="att-val green" id="attTotal">142</div><div class="att-lbl">TOTAL CLASSES</div></div>
+      <div class="att-info-box"><div class="att-val cyan" id="attPresent">128</div><div class="att-lbl">PRESENT</div></div>
+      <div class="att-info-box"><div class="att-val red" id="attAbsent">14</div><div class="att-lbl">ABSENT</div></div>
+    </div>
+
+    <!-- Attendance Bar Chart -->
+    <div class="att-section-title">MONTHLY ATTENDANCE OVERVIEW</div>
+    <div class="att-bar-chart" id="attBarChart"></div>
+    <div class="att-bar-labels" id="attBarLabels"></div>
+
+    <div style="height:14px"></div>
+
+    <!-- Subject-wise Attendance -->
+    <div class="att-section-title">SUBJECT-WISE ATTENDANCE</div>
+    <table class="att-table">
+      <thead><tr><th>SUBJECT</th><th>ATTENDED</th><th>TOTAL</th><th>%</th><th>STATUS</th></tr></thead>
+      <tbody id="attTableBody"></tbody>
+    </table>
+
+    <div class="att-footer">
+      <div class="att-footer-tick"><span style="font-size:1rem">✔</span> ATTENDANCE RECORD VERIFIED</div>
+      <div class="att-footer-time" id="attTime">2025-04-27 11:30:00</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ NFC SEMESTER MODAL ═══════════ -->
+<div class="nfc-overlay" id="nfcOverlay" onclick="if(event.target===this)closeNfcModal()">
+  <div class="nfc-card" id="nfcCard">
+    <div class="hud-tl"></div><div class="hud-tr"></div>
+    <div class="hud-bl"></div><div class="hud-br"></div>
+    <button class="sc-close" onclick="closeNfcModal()" style="border-color:rgba(123,47,255,.3);color:#c084fc;background:rgba(123,47,255,.08);">✕ CLOSE</button>
+
+    <div class="nfc-header">
+      <div class="nfc-photo"><img id="nfcPhoto" src="student1.png" alt="Student"/></div>
+      <div class="nfc-meta">
+        <div class="nfc-badge"><span class="sd"></span>NFC VERIFIED</div>
+        <div class="nfc-name" id="nfcName">RAHUL KUMAR</div>
+        <div class="nfc-sub" id="nfcSub">STU-2024-0892 · COMPUTER SCIENCE & ENGG · 3RD YEAR</div>
+      </div>
+    </div>
+
+    <div class="nfc-divider"></div>
+
+    <!-- Basic Details -->
+    <div class="nfc-section-title">STUDENT DETAILS</div>
+    <div class="basic-details-grid" id="nfcBasicDetails">
+      <div class="basic-detail-item nfc-detail-item"><label>STUDENT ID</label><span id="nfcID">STU-2024-0892</span></div>
+      <div class="basic-detail-item nfc-detail-item"><label>BRANCH</label><span id="nfcBranch">COMPUTER SCIENCE &amp; ENGG</span></div>
+      <div class="basic-detail-item nfc-detail-item"><label>PHONE NUMBER</label><span id="nfcPhone">+91 98765 43210</span></div>
+      <div class="basic-detail-item nfc-detail-item"><label>YEAR</label><span id="nfcYear">3RD YEAR</span></div>
+      <div class="basic-detail-item nfc-detail-item"><label>SECTION</label><span id="nfcSection">SEC-A</span></div>
+      <div class="basic-detail-item nfc-detail-item"><label>SCAN TYPE</label><span style="color:#c084fc">NFC / RFID</span></div>
+    </div>
+    <div class="nfc-divider" style="margin-bottom:14px;"></div>
+
+    <!-- Academic Summary -->
+    <div class="nfc-stats-row" id="nfcStatsRow">
+      <div class="nfc-stat-box"><div class="nfc-val" id="nfcCGPA">8.72</div><div class="nfc-lbl">CGPA</div></div>
+      <div class="nfc-stat-box"><div class="nfc-val" id="nfcCredits">148</div><div class="nfc-lbl">CREDITS EARNED</div></div>
+      <div class="nfc-stat-box"><div class="nfc-val" id="nfcBacklogs">0</div><div class="nfc-lbl">BACKLOGS</div></div>
+      <div class="nfc-stat-box"><div class="nfc-val" id="nfcRank">12</div><div class="nfc-lbl">CLASS RANK</div></div>
+    </div>
+
+    <!-- Semester Blocks -->
+    <div class="nfc-section-title">SEMESTER-WISE PERFORMANCE</div>
+    <div class="sem-grid" id="semGrid"></div>
+
+    <div class="nfc-footer">
+      <div class="nfc-footer-tick"><span style="font-size:1rem">✔</span> ACADEMIC RECORD VERIFIED</div>
+      <div class="nfc-footer-time" id="nfcTime">2025-04-27 11:30:00</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ SCANNING OVERLAY ═══════════ -->
 <div class="scan-overlay" id="scanOverlay">
   <div class="scan-ring-outer" id="scanRingOuter">
@@ -1004,27 +1371,25 @@
   document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileNav').classList.toggle('open'));
   function closeMobileNav(){ document.getElementById('mobileNav').classList.remove('open'); }
 
-  /* ══ Student data per scan ══ */
-  const students = {
-    qr: {
+  /* ══ Student data – QR (basic profile) ══ */
+  const studentsQR = {
+    student1: {
       photo:'student1.png', name:'RAHUL KUMAR', id:'STU-2024-0892',
       branch:'COMPUTER SCIENCE & ENGG', phone:'+91 98765 43210',
       year:'3RD YEAR', section:'SEC-A', mode:'QR CODE SCAN · AUTHENTICATED', badge:'QR VERIFIED'
     },
-    barcode: {
+    student2: {
       photo:'student2.png', name:'PRIYA SHARMA', id:'STU-2024-1045',
       branch:'ELECTRONICS & COMM ENGG', phone:'+91 87654 32109',
-      year:'2ND YEAR', section:'SEC-B', mode:'BARCODE SCAN · AUTHENTICATED', badge:'BARCODE VERIFIED'
-    },
-    nfc: {
-      photo:'student1.png', name:'ARJUN VERMA', id:'STU-2024-0673',
-      branch:'INFORMATION TECHNOLOGY', phone:'+91 76543 21098',
-      year:'4TH YEAR', section:'SEC-C', mode:'NFC TAP · AUTHENTICATED', badge:'NFC VERIFIED'
+      year:'2ND YEAR', section:'SEC-B', mode:'QR CODE SCAN · AUTHENTICATED', badge:'QR VERIFIED'
     }
   };
 
-  function showStudentModal(type){
-    const s = students[type];
+  /* ══ QR alternates between students ══ */
+  let qrToggle = false;
+  function showStudentModal(){
+    const s = qrToggle ? studentsQR.student2 : studentsQR.student1;
+    qrToggle = !qrToggle;
     document.getElementById('scPhoto').src    = s.photo;
     document.getElementById('scName').textContent   = s.name;
     document.getElementById('scName2').textContent  = s.name;
@@ -1046,6 +1411,180 @@
     document.getElementById('resultOverlay').classList.remove('show');
   }
 
+  /* ══ Barcode – Attendance Data ══ */
+  const attendanceData = {
+    student1: {
+      photo:'student1.png', name:'RAHUL KUMAR',
+      sub:'STU-2024-0892 · COMPUTER SCIENCE & ENGG · 3RD YEAR',
+      id:'STU-2024-0892', branch:'COMPUTER SCIENCE & ENGG',
+      phone:'+91 98765 43210', year:'3RD YEAR', section:'SEC-A',
+      total:156, present:141, absent:15,
+      monthly: [
+        {month:'JUL',pct:92},{month:'AUG',pct:88},{month:'SEP',pct:95},
+        {month:'OCT',pct:90},{month:'NOV',pct:86},{month:'DEC',pct:93},
+        {month:'JAN',pct:91},{month:'FEB',pct:88},{month:'MAR',pct:94},{month:'APR',pct:90}
+      ],
+      subjects: [
+        {name:'DATA STRUCTURES',attended:28,total:30,pct:93},
+        {name:'OPERATING SYSTEMS',attended:26,total:30,pct:87},
+        {name:'DATABASE MGMT',attended:29,total:30,pct:97},
+        {name:'COMPUTER NETWORKS',attended:27,total:30,pct:90},
+        {name:'SOFTWARE ENGG',attended:31,total:36,pct:86}
+      ]
+    },
+    student2: {
+      photo:'student2.png', name:'PRIYA SHARMA',
+      sub:'STU-2024-1045 · ELECTRONICS & COMM ENGG · 2ND YEAR',
+      id:'STU-2024-1045', branch:'ELECTRONICS & COMM ENGG',
+      phone:'+91 87654 32109', year:'2ND YEAR', section:'SEC-B',
+      total:142, present:128, absent:14,
+      monthly: [
+        {month:'JUL',pct:95},{month:'AUG',pct:90},{month:'SEP',pct:88},
+        {month:'OCT',pct:92},{month:'NOV',pct:89},{month:'DEC',pct:91},
+        {month:'JAN',pct:87},{month:'FEB',pct:93},{month:'MAR',pct:90},{month:'APR',pct:92}
+      ],
+      subjects: [
+        {name:'CIRCUIT THEORY',attended:27,total:28,pct:96},
+        {name:'SIGNALS & SYSTEMS',attended:24,total:28,pct:86},
+        {name:'DIGITAL ELECTRONICS',attended:26,total:28,pct:93},
+        {name:'ELECTROMAGNETIC THEORY',attended:25,total:28,pct:89},
+        {name:'ANALOG COMMUNICATION',attended:26,total:30,pct:87}
+      ]
+    }
+  };
+
+  let barToggle = false;
+  function showAttendanceModal(){
+    const d = barToggle ? attendanceData.student1 : attendanceData.student2;
+    barToggle = !barToggle;
+
+    document.getElementById('attPhoto').src = d.photo;
+    document.getElementById('attName').textContent = d.name;
+    document.getElementById('attSub').textContent = d.sub;
+    document.getElementById('attID').textContent      = d.id;
+    document.getElementById('attBranch').textContent  = d.branch;
+    document.getElementById('attPhone').textContent   = d.phone;
+    document.getElementById('attYear').textContent    = d.year;
+    document.getElementById('attSection').textContent = d.section;
+    document.getElementById('attTotal').textContent = d.total;
+    document.getElementById('attPresent').textContent = d.present;
+    document.getElementById('attAbsent').textContent = d.absent;
+
+    // Bar chart
+    const chartEl = document.getElementById('attBarChart');
+    const labelsEl = document.getElementById('attBarLabels');
+    chartEl.innerHTML = '';
+    labelsEl.innerHTML = '';
+    d.monthly.forEach(m => {
+      const bar = document.createElement('div');
+      bar.className = 'att-bar-col ' + (m.pct >= 90 ? 'high' : m.pct >= 80 ? 'mid' : 'low');
+      bar.style.height = m.pct * 0.6 + 'px';
+      bar.title = m.month + ': ' + m.pct + '%';
+      chartEl.appendChild(bar);
+      const lbl = document.createElement('span');
+      lbl.textContent = m.month;
+      labelsEl.appendChild(lbl);
+    });
+
+    // Table
+    const tbody = document.getElementById('attTableBody');
+    tbody.innerHTML = '';
+    d.subjects.forEach(s => {
+      const tr = document.createElement('tr');
+      const cls = s.pct >= 90 ? 'present' : s.pct >= 75 ? '' : 'absent';
+      tr.innerHTML = `<td>${s.name}</td><td>${s.attended}</td><td>${s.total}</td><td class="${cls}">${s.pct}%</td><td class="${s.pct>=75?'present':'absent'}">${s.pct>=75?'✔ ELIGIBLE':'✘ SHORT'}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('attTime').textContent = new Date().toLocaleString('en-IN',{hour12:false}).toUpperCase();
+    document.getElementById('attOverlay').classList.add('show');
+  }
+
+  function closeAttModal(){
+    document.getElementById('attOverlay').classList.remove('show');
+  }
+
+  /* ══ NFC – Full Semester Academic Data ══ */
+  const semesterData = {
+    student1: {
+      photo:'student1.png', name:'RAHUL KUMAR',
+      sub:'STU-2024-0892 · COMPUTER SCIENCE & ENGG · 3RD YEAR',
+      id:'STU-2024-0892', branch:'COMPUTER SCIENCE & ENGG',
+      phone:'+91 98765 43210', year:'3RD YEAR', section:'SEC-A',
+      cgpa:'8.72', credits:'148', backlogs:'0', rank:'12',
+      semesters: [
+        {sem:'SEM 1',sgpa:'8.40',credits:'24',subjects:6,grade:'A',status:'CLEARED'},
+        {sem:'SEM 2',sgpa:'8.65',credits:'24',subjects:6,grade:'A',status:'CLEARED'},
+        {sem:'SEM 3',sgpa:'8.90',credits:'26',subjects:7,grade:'A+',status:'CLEARED'},
+        {sem:'SEM 4',sgpa:'9.10',credits:'26',subjects:7,grade:'A+',status:'CLEARED'},
+        {sem:'SEM 5',sgpa:'8.55',credits:'24',subjects:6,grade:'A',status:'CLEARED'},
+        {sem:'SEM 6',sgpa:'8.72',credits:'24',subjects:6,grade:'A',status:'IN PROGRESS'}
+      ]
+    },
+    student2: {
+      photo:'student2.png', name:'PRIYA SHARMA',
+      sub:'STU-2024-1045 · ELECTRONICS & COMM ENGG · 2ND YEAR',
+      id:'STU-2024-1045', branch:'ELECTRONICS & COMM ENGG',
+      phone:'+91 87654 32109', year:'2ND YEAR', section:'SEC-B',
+      cgpa:'9.15', credits:'96', backlogs:'0', rank:'3',
+      semesters: [
+        {sem:'SEM 1',sgpa:'9.00',credits:'24',subjects:6,grade:'A+',status:'CLEARED'},
+        {sem:'SEM 2',sgpa:'9.20',credits:'24',subjects:6,grade:'A+',status:'CLEARED'},
+        {sem:'SEM 3',sgpa:'9.30',credits:'24',subjects:6,grade:'A+',status:'CLEARED'},
+        {sem:'SEM 4',sgpa:'9.10',credits:'24',subjects:6,grade:'A+',status:'IN PROGRESS'}
+      ]
+    }
+  };
+
+  let nfcToggle = false;
+  function showNfcModal(){
+    const d = nfcToggle ? semesterData.student1 : semesterData.student2;
+    nfcToggle = !nfcToggle;
+
+    document.getElementById('nfcPhoto').src = d.photo;
+    document.getElementById('nfcName').textContent = d.name;
+    document.getElementById('nfcSub').textContent = d.sub;
+    document.getElementById('nfcID').textContent      = d.id;
+    document.getElementById('nfcBranch').textContent  = d.branch;
+    document.getElementById('nfcPhone').textContent   = d.phone;
+    document.getElementById('nfcYear').textContent    = d.year;
+    document.getElementById('nfcSection').textContent = d.section;
+    document.getElementById('nfcCGPA').textContent = d.cgpa;
+    document.getElementById('nfcCredits').textContent = d.credits;
+    document.getElementById('nfcBacklogs').textContent = d.backlogs;
+    document.getElementById('nfcRank').textContent = d.rank;
+
+    // Semester blocks
+    const grid = document.getElementById('semGrid');
+    grid.innerHTML = '';
+    d.semesters.forEach(s => {
+      const sgpaNum = parseFloat(s.sgpa);
+      const gpaCls = sgpaNum >= 9.0 ? 'high' : sgpaNum >= 8.0 ? 'mid' : 'low';
+      const block = document.createElement('div');
+      block.className = 'sem-block';
+      block.innerHTML = `
+        <div class="sem-block-hdr">
+          <span class="sem-label">${s.sem}</span>
+          <span class="sem-gpa ${gpaCls}">${s.sgpa}</span>
+        </div>
+        <div class="sem-details">
+          <div class="sem-detail-item"><label>CREDITS</label><span>${s.credits}</span></div>
+          <div class="sem-detail-item"><label>SUBJECTS</label><span>${s.subjects}</span></div>
+          <div class="sem-detail-item"><label>GRADE</label><span>${s.grade}</span></div>
+          <div class="sem-detail-item"><label>STATUS</label><span style="color:${s.status==='CLEARED'?'var(--green)':'var(--neon2)'}">${s.status}</span></div>
+        </div>
+      `;
+      grid.appendChild(block);
+    });
+
+    document.getElementById('nfcTime').textContent = new Date().toLocaleString('en-IN',{hour12:false}).toUpperCase();
+    document.getElementById('nfcOverlay').classList.add('show');
+  }
+
+  function closeNfcModal(){
+    document.getElementById('nfcOverlay').classList.remove('show');
+  }
+
   /* ══ Scanning Overlay ══ */
   const scanConfigs = {
     qr: {
@@ -1054,11 +1593,11 @@
     },
     barcode: {
       emoji:'|||', label:'BARCODE SCAN', sub:'READING BARCODE STRIP...', color:'bar',
-      steps:['▶ SCANNING BARCODE...','▶ PARSING DATA...','▶ CROSS-REFERENCING...','✔ MATCH FOUND']
+      steps:['▶ SCANNING BARCODE...','▶ PARSING ATTENDANCE...','▶ LOADING RECORDS...','✔ DATA RETRIEVED']
     },
     nfc: {
       emoji:'📡', label:'NFC TAP SCAN', sub:'READING NFC CHIP...', color:'nfc',
-      steps:['▶ NFC HANDSHAKE...','▶ READING CHIP DATA...','▶ AUTHENTICATING...','✔ MATCH FOUND']
+      steps:['▶ NFC HANDSHAKE...','▶ READING ACADEMIC DATA...','▶ LOADING SEMESTERS...','✔ RECORDS LOADED']
     }
   };
 
@@ -1098,7 +1637,7 @@
       setTimeout(()=>{ statusText.textContent = msg; }, stepDelay * (i + 1));
     });
 
-    // After full animation, close overlay and show student card
+    // After full animation, close overlay & show modal
     setTimeout(()=>{
       overlay.classList.remove('show');
       setTimeout(cb, 250);
@@ -1113,7 +1652,6 @@
     btn.disabled = true;
     circle.style.transform = 'scale(1.15)';
     circle.style.filter = `drop-shadow(0 0 18px ${color})`;
-    // Reset after overlay finishes
     setTimeout(()=>{
       btn.innerHTML = label;
       btn.disabled = false;
@@ -1124,15 +1662,15 @@
 
   function scanQR(){
     animateBtn('qrCircle','qrBtn','▶ INITIATE QR SCAN','rgba(0,245,212,.8)');
-    showScanOverlay('qr', ()=>{ showStudentModal('qr'); });
+    showScanOverlay('qr', ()=>{ showStudentModal(); });
   }
   function scanBarcode(){
     animateBtn('barCircle','barBtn','▶ INITIATE BARCODE SCAN','rgba(0,230,118,.8)');
-    showScanOverlay('barcode', ()=>{ showStudentModal('barcode'); });
+    showScanOverlay('barcode', ()=>{ showAttendanceModal(); });
   }
   function tapNFC(){
     animateBtn('nfcCircle','nfcBtn','▶ TAP NFC CARD','rgba(123,47,255,.8)');
-    showScanOverlay('nfc', ()=>{ showStudentModal('nfc'); });
+    showScanOverlay('nfc', ()=>{ showNfcModal(); });
   }
 </script>
 </body>
