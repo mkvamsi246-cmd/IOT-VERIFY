@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SmartID – IoT-Based Smart ID Card Verification System</title>
-  <meta name="description" content="IoT Smart ID Card Verification – QR, NFC/RFID, Barcode scanning with real-time GPS tracking."/>
+  <meta name="description" content="IoT Smart ID Card Verification – QR, NFC/RFID, Barcode scanning with cloud verification."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -904,6 +904,45 @@
       .page-footer { padding:24px 4%; }
       .footer-brand { font-size:.8rem; }
     }
+
+    /* ═══════════════════════════════════════
+       PAGE 5 – REQUEST LOST ID
+    ═══════════════════════════════════════ */
+    #page-request {
+      background:radial-gradient(ellipse 70% 60% at 50% 10%,rgba(0,245,212,.06) 0%,transparent 60%),
+                 linear-gradient(180deg,rgba(2,11,24,1),rgba(3,14,31,.98));
+    }
+    .request-form-container {
+      background:rgba(0,20,50,.72); border:1px solid rgba(0,245,212,.17);
+      border-radius:10px; padding:40px; max-width:700px; margin:0 auto;
+      box-shadow:0 10px 40px rgba(0,0,0,.4); position:relative; overflow:hidden;
+    }
+    .request-form-container::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg,transparent,var(--neon),transparent);
+    }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .form-group { display:flex; flex-direction:column; gap:8px; }
+    .form-group label {
+      font-family:'Share Tech Mono',monospace; font-size:.7rem; color:var(--neon);
+      letter-spacing:1.5px; text-transform:uppercase;
+    }
+    .form-group input, .form-group textarea {
+      background:rgba(0,0,0,.3); border:1px solid rgba(0,245,212,.2);
+      border-radius:4px; padding:12px 14px;
+      font-family:'Share Tech Mono',monospace; font-size:.85rem; color:var(--text);
+      transition:border-color var(--tr), box-shadow var(--tr); outline:none;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color:var(--neon); box-shadow:0 0 10px rgba(0,245,212,.2);
+    }
+    .form-group input::placeholder, .form-group textarea::placeholder {
+      color:rgba(180,220,255,.3);
+    }
+    @media(max-width:600px) {
+      .form-grid { grid-template-columns:1fr; }
+      .request-form-container { padding:24px; }
+    }
   </style>
 </head>
 <body>
@@ -923,6 +962,7 @@
     <li><a onclick="navigate('features')" data-page="features">FEATURES</a></li>
     <li><a onclick="navigate('verify')"   data-page="verify">VERIFY</a></li>
     <li><a onclick="navigate('about')"    data-page="about">ABOUT</a></li>
+    <li><a onclick="navigate('request')"  data-page="request">LOST ID</a></li>
   </ul>
   <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
 </nav>
@@ -932,6 +972,7 @@
   <a onclick="navigate('features');closeMobileNav()">▶ FEATURES</a>
   <a onclick="navigate('verify');closeMobileNav()">▶ VERIFY</a>
   <a onclick="navigate('about');closeMobileNav()">▶ ABOUT</a>
+  <a onclick="navigate('request');closeMobileNav()">▶ LOST ID</a>
 </div>
 
 <!-- ═══════════ PAGE: HOME ═══════════ -->
@@ -945,7 +986,7 @@
           <span class="glitch" data-text="SMART ID CARD">SMART ID CARD</span><br/>
           <span class="t-neon">VERIFICATION SYS</span>
         </h1>
-        <p class="hero-desc">Next-gen IoT-powered identity authentication — contactless QR, NFC/RFID &amp; Barcode scanning with real-time GPS tracking and cloud verification in under 1 second.</p>
+        <p class="hero-desc">Next-gen IoT-powered identity authentication — contactless QR, NFC/RFID &amp; Barcode scanning with cloud verification in under 1 second.</p>
         <div class="hero-cta">
           <button class="btn-cyber"         onclick="navigate('verify')">▶ LIVE DEMO</button>
           <button class="btn-outline-cyber" onclick="navigate('features')">⚡ FEATURES</button>
@@ -1004,8 +1045,6 @@
     <div class="features-grid">
       <div class="feature-card"><div class="feature-icon fi1">📱</div><h3>QR CODE VERIFY</h3><p>Cryptographic QR codes embedded in each ID enable instant hash-validated identity verification at IoT scanners.</p></div>
       <div class="feature-card"><div class="feature-icon fi2">📡</div><h3>NFC / RFID AUTH</h3><p>Tap-and-go NFC/RFID chips authenticate in milliseconds — fully contactless, no physical swipe required.</p></div>
-      <div class="feature-card"><div class="feature-icon fi3">🛰️</div><h3>GPS IOT TRACKING</h3><p>Real-time GPS telemetry logs every verification event with geofencing alerts and precise location audit trails.</p></div>
-      <div class="feature-card"><div class="feature-icon fi4">🔒</div><h3>TAMPER-PROOF CORE</h3><p>AES-256 encryption and immutable blockchain-style logs ensure zero tolerance for forgery or tampering.</p></div>
       <div class="feature-card"><div class="feature-icon fi5">⚡</div><h3>SUB-SECOND SCAN</h3><p>Ultra-fast edge-processing delivers verification results in under one second at any access point.</p></div>
       <div class="feature-card"><div class="feature-icon fi6">☁️</div><h3>CLOUD SYNC ENGINE</h3><p>All verification events sync instantly to secure cloud infrastructure, enabling real-time monitoring from any node.</p></div>
     </div>
@@ -1077,11 +1116,10 @@
         <p>The <strong style="color:#fff">IoT-Based Smart ID Card Verification System</strong> harnesses the Internet of Things to transform identity authentication into a fully-networked, cloud-synchronized ecosystem.</p>
         <div class="about-quote">"IoT connects ID cards with cloud systems for real-time verification and tracking — enabling instant identity decisions from any node, anywhere in the world."</div>
         <p>Each smart card carries embedded sensors — QR codes, NFC/RFID chips, barcodes — that communicate with IoT edge gateways, relaying authentication requests to the cloud verification engine in milliseconds.</p>
-        <p>GPS telemetry modules log precise coordinates and timestamps for every scan event, creating an immutable audit trail that eliminates unauthorized access and identity fraud.</p>
         <div class="tech-chips">
           <span class="chip">📱 QR CODE</span><span class="chip">📡 NFC/RFID</span>
-          <span class="chip">🛰️ GPS IOT</span><span class="chip">☁️ CLOUD</span>
-          <span class="chip">🔒 AES-256</span><span class="chip">📊 ANALYTICS</span>
+          <span class="chip">☁️ CLOUD</span>
+          <span class="chip">📊 ANALYTICS</span>
         </div>
       </div>
       <div class="iot-diagram">
@@ -1094,6 +1132,61 @@
         <div class="diagram-node"><div class="n-icon">✅</div><div class="n-label">RESULT DELIVERED</div><div class="n-sub">VALID / INVALID</div></div>
       </div>
     </div>
+    <div class="page-footer">
+      <div class="footer-brand"><img src="logo.png" width="34" height="34" alt=""/>SMARTID VERIFICATION SYSTEM</div>
+      <div class="footer-glow"></div>
+      <p class="footer-text">IOT-BASED SMART ID CARD VERIFICATION SYSTEM · © 2025</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE: REQUEST LOST ID ═══════════ -->
+<div class="page" id="page-request">
+  <div class="page-inner">
+    <div class="section-header">
+      <div class="section-tag">ADMINISTRATION OFFICE</div>
+      <h2 class="section-title">REQUEST <span class="g2">NEW ID</span></h2>
+      <p class="section-sub">Lost your ID card? Submit a replacement request to the college administration office instantly. A tracking number will be generated for your request.</p>
+    </div>
+
+    <div class="request-form-container">
+      <form id="lostIdForm" onsubmit="submitLostId(event)">
+        <div class="form-grid">
+           <div class="form-group">
+             <label>FULL NAME</label>
+             <input type="text" id="reqName" required placeholder="Enter your full name" />
+           </div>
+           <div class="form-group">
+             <label>STUDENT ID NO.</label>
+             <input type="text" id="reqId" required placeholder="e.g. STU-2024-1234" />
+           </div>
+           <div class="form-group">
+             <label>BRANCH</label>
+             <input type="text" id="reqBranch" required placeholder="e.g. COMPUTER SCIENCE" />
+           </div>
+           <div class="form-group">
+             <label>YEAR / SECTION</label>
+             <input type="text" id="reqYearSec" required placeholder="e.g. 3RD YEAR / SEC-A" />
+           </div>
+           <div class="form-group" style="grid-column: 1 / -1;">
+             <label>REASON FOR REPLACEMENT</label>
+             <textarea id="reqReason" required rows="3" placeholder="Please provide details about how you lost your ID card..."></textarea>
+           </div>
+        </div>
+        <button type="submit" class="btn-cyber" style="margin-top:24px; width:100%; justify-content:center;">▶ SUBMIT REQUEST</button>
+      </form>
+
+      <div id="requestSuccess" style="display:none; text-align:center; padding:40px 20px; border:1px solid rgba(0,230,118,.3); background:rgba(0,230,118,.05); border-radius:8px;">
+        <div style="font-size:3.5rem; color:var(--green); margin-bottom:10px; text-shadow:0 0 20px rgba(0,230,118,.4);">✔</div>
+        <h3 style="font-family:'Orbitron',monospace; color:#fff; font-size:1.2rem; margin-bottom:10px;">REQUEST SUBMITTED SUCCESSFULLY</h3>
+        <p style="font-family:'Share Tech Mono',monospace; color:var(--dim); font-size:.9rem; line-height:1.6;">Your replacement request has been securely forwarded to the administration office.</p>
+        <div style="margin-top:20px; font-family:'Share Tech Mono',monospace; color:var(--neon); padding:10px 20px; border:1px dashed var(--neon); display:inline-block; border-radius:4px; font-size:1rem; letter-spacing:1px; background:rgba(0,245,212,.05);">TRACKING ID: <span id="reqTrackingId" style="font-weight:bold; color:#fff;"></span></div>
+        <div style="margin-top:30px;">
+          <button type="button" class="btn-outline-cyber" onclick="resetRequestForm()">▶ SUBMIT ANOTHER REQUEST</button>
+        </div>
+      </div>
+    </div>
+
     <div class="page-footer">
       <div class="footer-brand"><img src="logo.png" width="34" height="34" alt=""/>SMARTID VERIFICATION SYSTEM</div>
       <div class="footer-glow"></div>
@@ -1350,7 +1443,7 @@
   })();
 
   /* ══ SPA Router ══ */
-  const pages   = ['home','features','verify','about'];
+  const pages   = ['home','features','verify','about','request'];
   const navLinks = document.querySelectorAll('.nav-links a[data-page]');
   let current   = 'home';
 
@@ -1671,6 +1764,20 @@
   function tapNFC(){
     animateBtn('nfcCircle','nfcBtn','▶ TAP NFC CARD','rgba(123,47,255,.8)');
     showScanOverlay('nfc', ()=>{ showNfcModal(); });
+  }
+
+  /* ══ Lost ID Request Form ══ */
+  function submitLostId(e) {
+    e.preventDefault();
+    const trackingId = 'REQ-' + Math.floor(100000 + Math.random() * 900000);
+    document.getElementById('reqTrackingId').textContent = trackingId;
+    document.getElementById('lostIdForm').style.display = 'none';
+    document.getElementById('requestSuccess').style.display = 'block';
+  }
+  function resetRequestForm() {
+    document.getElementById('lostIdForm').reset();
+    document.getElementById('lostIdForm').style.display = 'block';
+    document.getElementById('requestSuccess').style.display = 'none';
   }
 </script>
 </body>
